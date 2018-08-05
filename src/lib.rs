@@ -23,7 +23,18 @@ impl Word {
     }
 
     fn is_adjacent(&self, other:Word) -> bool {
-        self.inner & 255 != other.inner & 255
+        let mut n = self.inner;
+        let mut m = other.inner;
+        while n > 0 && m > 0 {
+            let c = n & 255;
+            let d = m & 255;
+            n = n >> 8;
+            m = m >> 8;
+            if c != d {
+                return n == m
+            }
+        }
+        false
     }
 }
 
@@ -87,8 +98,22 @@ mod tests {
             }
             #[test]
             fn should_be_true_if_words_are_different_by_their_last_letter() {
-                let w = Word::from("DOG");
-                assert_eq!(true, w.is_adjacent(Word::from("DOT")))
+                assert_eq!(true, Word::from("DOG").is_adjacent(Word::from("DOT")))
+            }
+            #[test]
+            fn should_be_true_if_words_are_different_by_only_a_letter() {
+                assert_eq!(true, Word::from("DOG").is_adjacent(Word::from("DIG")));
+                assert_eq!(true, Word::from("DOG").is_adjacent(Word::from("FOG")));
+            }
+            #[test]
+            fn should_be_false_if_words_are_different_by_more_than_one_letter() {
+                assert_eq!(false, Word::from("DOG").is_adjacent(Word::from("DIB")));
+                assert_eq!(false, Word::from("DOG").is_adjacent(Word::from("GOT")));
+            }
+            #[test]
+            fn should_be_false_if_words_have_different_size() {
+                assert_eq!(false, Word::from("DOGE").is_adjacent(Word::from("DOG")));
+                assert_eq!(false, Word::from("BAT").is_adjacent(Word::from("BATH")));
             }
         }
     }
