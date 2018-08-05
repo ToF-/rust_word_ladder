@@ -21,6 +21,10 @@ impl Word {
         }
         result.clone()
     }
+
+    fn is_adjacent(&self, other:Word) -> bool {
+        false
+    }
 }
 
 #[derive(Default)]
@@ -71,6 +75,16 @@ mod tests {
             let w3 = Word::from("CAT");
             assert_eq!(w1,w2);
             assert_ne!(w1,w3)
+        }
+
+        mod is_adjacent {
+            use super::*;
+
+            #[test]
+            fn should_be_false_if_words_are_identical() {
+                let w = Word::from("DOG");
+                assert_eq!(false, w.is_adjacent(Word::from("DOG")))
+            }
         }
     }
 
