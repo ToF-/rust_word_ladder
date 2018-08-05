@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,PartialEq,Eq,Hash)]
 struct Word {
     inner: u64
 }
@@ -39,13 +40,17 @@ impl Word {
 }
 
 #[derive(Debug,PartialEq)]
-enum WordStatus { Unknown }
+enum WordStatus { Unknown, Unmarked }
 
 #[derive(Default)]
-struct WordGraph {}
+struct WordGraph {
+    container : HashMap<Word,WordStatus>
+}
 
+use WordStatus::*;
 impl WordGraph {
-    pub fn add_word(&self, _word : Word) {
+    pub fn add_word(&mut self, word : Word) {
+        self.container.insert(word, Unmarked);
     }
 
     pub fn ladder(&self, _origin: Word, _target: Word) -> Vec<Word> {
@@ -53,7 +58,10 @@ impl WordGraph {
     }
 
     fn get(&self, word : Word) -> WordStatus {
-       WordStatus::Unknown
+        match self.container.get(&word) {
+            Some(w) => Unmarked,
+            None => Unknown
+        }
     }
 }
 
@@ -67,7 +75,7 @@ mod tests {
         #[test]
         #[ignore]
         fn should_find_a_ladder_between_two_words() {
-            let word_graph : WordGraph = WordGraph::default();
+            let mut word_graph : WordGraph = WordGraph::default();
             for s in ["CAT","CAT","BAT","BAG","COG","COT","DOG"].into_iter() {
                 word_graph.add_word(Word::from(s));
             }
@@ -133,6 +141,13 @@ mod tests {
         fn should_not_contain_a_word_when_empty() {
             let word_graph = WordGraph::default();
             assert_eq!(Unknown, word_graph.get(Word::from("DOG")))
+        }
+        #[test]
+        fn should_contain_an_unmarked_word_that_was_added() {
+            let mut word_graph: WordGraph = WordGraph::default();
+            word_graph.add_word(Word::from("DOG"));
+            assert_eq!(Unmarked, word_graph.get(Word::from("DOG")));
+            assert_eq!(Unknown, word_graph.get(Word::from("CAT")))
         }
     }
 
