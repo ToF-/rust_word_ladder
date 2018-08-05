@@ -64,6 +64,14 @@ mod tests {
             assert_eq!(String::from("DOG"),Word::from("DOG").to_string());
             assert_eq!(String::from("CAT"),Word::from("CAT").to_string())
         }
+        #[test]
+        fn should_be_comparable_for_equality() {
+            let w1 = Word::from("DOG");
+            let w2 = Word::from("DOG");
+            let w3 = Word::from("CAT");
+            assert_eq!(w1,w2);
+            assert_ne!(w1,w3)
+        }
     }
 
 }
