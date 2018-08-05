@@ -71,6 +71,10 @@ impl WordGraph {
         self.container.remove(&word);
         self.container.insert(word,Linked(other));
     }
+
+    fn path(&self, word:Word) -> Vec<Word> {
+       vec![word]
+    }
 }
 
 #[cfg(test)]
@@ -164,6 +168,14 @@ mod tests {
             word_graph.add_word(Word::from("FOG"));
             word_graph.link(Word::from("FOG"),Word::from("DOG"));
             assert_eq!(Linked (Word::from("DOG")), word_graph.get(Word::from("FOG")))
+        }
+        #[test]
+        fn should_find_a_one_step_path_to_a_unmarked_word() {
+            let mut word_graph: WordGraph = WordGraph::default();
+            word_graph.add_word(Word::from("DOG"));
+            let expected = vec![Word::from("DOG")];
+            let result = word_graph.path(Word::from("DOG"));
+            assert_eq!(result, expected)
         }
     }
 
