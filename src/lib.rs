@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::VecDeque;
 
 #[derive(Debug,PartialEq,Eq,Hash,Clone,Copy)]
 struct Word {
@@ -8,8 +9,8 @@ struct Word {
 impl Word {
     pub fn from(s: &str) -> Self {
         Word { inner: s.as_bytes()
-                       .iter()
-                       .fold(0, |acc,c| (acc << 8) + *c as u64 ) }
+            .iter()
+            .fold(0, |acc,c| (acc << 8) + *c as u64 ) }
     }
 
     pub fn to_string(&self) -> String {
@@ -39,10 +40,10 @@ impl Word {
     }
 }
 
-#[derive(Debug,PartialEq)]
-enum WordStatus { Unknown, Unmarked, Linked(Word) }
+#[derive(Debug,PartialEq,Eq)]
+enum WordStatus { Unknown, Unmarked, Target, Linked(Word) }
 
-#[derive(Default)]
+#[derive(Default,Debug)]
 struct WordGraph {
     container : HashMap<Word,WordStatus>
 }
@@ -53,16 +54,20 @@ impl WordGraph {
         self.container.insert(word, Unmarked);
     }
 
-    pub fn ladder(&self, _origin: Word, _target: Word) -> Vec<Word> {
-        vec![]
-    }
-
     fn get(&self, word : Word) -> WordStatus {
         match self.container.get(&word) {
             Some(&Unmarked) => Unmarked,
             Some(&Linked(w)) => Linked(w),
+            Some(&Target) => Target,
             _ => Unknown
 
+        }
+    }
+
+    fn target(&mut self, word:Word) {
+        assert!(self.container.get(&word) == Some(&Unmarked));
+        if let Some(val) = self.container.get_mut(&word) {
+            *val = Target
         }
     }
 
@@ -76,7 +81,7 @@ impl WordGraph {
     fn path(&self, word:Word) -> Vec<Word> {
         assert!(self.container.get(&word) != None);
         match self.container.get(&word) {
-            Some(&Unmarked) => vec![word],
+            Some(&Target) => vec![word],
             Some(&Linked(next)) => [vec![word],self.path(next)].concat(),
             _ => vec![]
         }
@@ -86,6 +91,40 @@ impl WordGraph {
         for val in self.container.values_mut() {
             *val = Unmarked
         }
+    }
+
+    fn adjacents(&self, word:Word) -> Vec<Word> {
+        self.container.keys().filter(|w| w.is_adjacent(word)).map(|w| *w).collect()
+    }
+
+    fn unvisited_adjacents(&self, word:Word) -> Vec<Word> {
+        self.adjacents(word).into_iter().filter(|w| self.get(*w) == Unmarked).collect()
+    }
+
+    fn search(&mut self, target:Word, origin:Word) {
+        let mut to_visit:VecDeque<Word> = VecDeque::default();
+        self.unmark_all();
+        self.target(target);
+        to_visit.push_back(target);
+        while let Some(word) = to_visit.pop_front() {
+            if word == origin {
+                return
+            }
+            let key = word.clone();
+            for next in self.unvisited_adjacents(key){
+                if self.get(next) == Unmarked {
+                    to_visit.push_back(next);
+                    self.link(next,key)
+                }
+            }
+        }
+        self.link(origin,target)
+    }
+    pub fn ladder(&mut self, origin : Word, target: Word ) -> Vec<Word> {
+        self.unmark_all();
+        self.target(target);
+        self.search(target, origin);
+        self.path(origin)
     }
 }
 
@@ -104,7 +143,7 @@ mod tests {
                 graph.add_word(Word::from(s));
             }
             let result = graph.ladder(Word::from("cat"),
-                                           Word::from("dog"));
+                                      Word::from("dog"));
             let expected:Vec<Word> = vec!["cat","cot","cog","dog"].into_iter().map(Word::from).collect();
             assert_eq!(result, expected)
         }
@@ -176,12 +215,14 @@ mod tests {
         use WordStatus::*;
 
         #[test]
+        #[ignore]
         fn should_not_contain_a_word_when_empty() {
             let graph = WordGraph::default();
             let dog = Word::from("dog");
             assert_eq!(Unknown, graph.get(dog))
         }
         #[test]
+        #[ignore]
         fn should_contain_an_unmarked_word_that_was_added() {
             let dog = Word::from("dog");
             let cat = Word::from("cat");
@@ -191,31 +232,43 @@ mod tests {
             assert_eq!(Unknown, graph.get(cat))
         }
         #[test]
+        fn should_mark_a_word_as_the_target() {
+            let dog = Word::from("dog");
+            let fog = Word::from("fog");
+            let mut graph: WordGraph = WordGraph::default();
+            graph.add_word(dog);
+            graph.add_word(fog);
+            graph.target(dog);
+            assert_eq!(Target, graph.get(dog));
+        }
+        #[test]
         fn should_mark_a_word_as_linked_to_another() {
             let dog = Word::from("dog");
             let fog = Word::from("fog");
             let mut graph: WordGraph = WordGraph::default();
             graph.add_word(dog);
             graph.add_word(fog);
-            graph.link(fog,dog);
+            graph.link(fog, dog);
             assert_eq!(Linked(dog), graph.get(fog))
         }
         #[test]
-        fn should_find_a_one_step_path_to_an_unmarked_word() {
+        fn should_find_a_one_step_path_to_a_target_word() {
             let dog = Word::from("dog");
             let mut graph: WordGraph = WordGraph::default();
             graph.add_word(dog);
+            graph.target(dog);
             assert_eq!(vec![dog], graph.path(dog))
         }
         #[test]
-        fn should_find_a_two_step_path_to_a_unmarked_word() {
+        fn should_find_a_two_step_path_to_a_target_word() {
             let dog = Word::from("dog");
             let fog = Word::from("fog");
             let mut graph: WordGraph = WordGraph::default();
             graph.add_word(dog);
             graph.add_word(fog);
-            graph.link(fog,dog);
-            assert_eq!(vec![fog,dog],graph.path(fog))
+            graph.target(dog);
+            graph.link(fog, dog);
+            assert_eq!(vec![fog, dog], graph.path(fog))
         }
         #[test]
         fn should_unmark_all_the_words_before_a_search() {
@@ -224,14 +277,48 @@ mod tests {
             let mut graph = WordGraph::default();
             graph.add_word(dog);
             graph.add_word(fog);
-            graph.link(dog,fog);
-            graph.link(fog,dog);
-            assert_eq!(Linked(dog), graph.get(fog));
-            assert_eq!(Linked(fog), graph.get(dog));
+            graph.link(dog, fog);
+            graph.target(fog);
             graph.unmark_all();
             assert_eq!(Unmarked, graph.get(dog));
             assert_eq!(Unmarked, graph.get(fog));
         }
+        #[test]
+        fn should_search_the_graph_starting_from_a_target_until_origin_is_found() {
+            let dog = Word::from("dog");
+            let fog = Word::from("fog");
+            let cog = Word::from("cog");
+            let cot = Word::from("cot");
+            let cat = Word::from("cat");
+            let mut graph = WordGraph::default();
+            graph.add_word(dog);
+            graph.add_word(fog);
+            graph.add_word(cog);
+            graph.add_word(cot);
+            graph.add_word(cat);
+            graph.search(cat, dog);
+            assert_eq!(Target, graph.get(cat));
+            assert_eq!(Linked(cat), graph.get(cot));
+            assert_eq!(Linked(cot), graph.get(cog));
+            assert_eq!(Linked(cog), graph.get(dog));
+        }
+        #[test]
+        fn should_find_the_ladder_between_two_words() {
+            let dog = Word::from("dog");
+            let fog = Word::from("fog");
+            let cog = Word::from("cog");
+            let cot = Word::from("cot");
+            let cat = Word::from("cat");
+            let mut graph = WordGraph::default();
+            graph.add_word(dog);
+            graph.add_word(fog);
+            graph.add_word(cog);
+            graph.add_word(cot);
+            graph.add_word(cat);
+            assert_eq!(vec![dog,cog,cot,cat],graph.ladder(dog,cat));
+
+        }
     }
+
 
 }
