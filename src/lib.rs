@@ -73,7 +73,12 @@ impl WordGraph {
     }
 
     fn path(&self, word:Word) -> Vec<Word> {
-       vec![word]
+        assert!(self.container.get(&word) != None);
+        match self.container.get(&word) {
+            Some(&Unmarked) => vec![word],
+            Some(&Linked(w)) => [self.path(w), vec![word]].concat(),
+            _ => vec![]
+        }
     }
 }
 
@@ -175,6 +180,16 @@ mod tests {
             word_graph.add_word(Word::from("DOG"));
             let expected = vec![Word::from("DOG")];
             let result = word_graph.path(Word::from("DOG"));
+            assert_eq!(result, expected)
+        }
+        #[test]
+        fn should_find_a_two_step_path_to_a_unmarked_word() {
+            let mut word_graph: WordGraph = WordGraph::default();
+            word_graph.add_word(Word::from("DOG"));
+            word_graph.add_word(Word::from("FOG"));
+            word_graph.link(Word::from("FOG"),Word::from("DOG"));
+            let expected = vec![Word::from("DOG"),Word::from("FOG")];
+            let result = word_graph.path(Word::from("FOG"));
             assert_eq!(result, expected)
         }
     }
