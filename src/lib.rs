@@ -54,7 +54,7 @@ impl WordGraph {
         self.container.insert(word, Unmarked);
     }
 
-    fn get(&self, word : Word) -> WordStatus {
+    fn get_word(&self, word : Word) -> WordStatus {
         match self.container.get(&word) {
             Some(&Unmarked) => Unmarked,
             Some(&Linked(w)) => Linked(w),
@@ -98,7 +98,7 @@ impl WordGraph {
     }
 
     fn unvisited_adjacents(&self, word:Word) -> Vec<Word> {
-        self.adjacents(word).into_iter().filter(|w| self.get(*w) == Unmarked).collect()
+        self.adjacents(word).into_iter().filter(|w| self.get_word(*w) == Unmarked).collect()
     }
 
     fn search(&mut self, target:Word, origin:Word) {
@@ -112,7 +112,7 @@ impl WordGraph {
             }
             let key = word.clone();
             for next in self.unvisited_adjacents(key){
-                if self.get(next) == Unmarked {
+                if self.get_word(next) == Unmarked {
                     to_visit.push_back(next);
                     self.link(next,key)
                 }
@@ -219,7 +219,7 @@ mod tests {
         fn should_not_contain_a_word_when_empty() {
             let graph = WordGraph::default();
             let dog = Word::from("dog");
-            assert_eq!(Unknown, graph.get(dog))
+            assert_eq!(Unknown, graph.get_word(dog))
         }
         #[test]
         #[ignore]
@@ -228,8 +228,8 @@ mod tests {
             let cat = Word::from("cat");
             let mut graph: WordGraph = WordGraph::default();
             graph.add_word(dog);
-            assert_eq!(Unmarked, graph.get(dog));
-            assert_eq!(Unknown, graph.get(cat))
+            assert_eq!(Unmarked, graph.get_word(dog));
+            assert_eq!(Unknown, graph.get_word(cat))
         }
         #[test]
         fn should_mark_a_word_as_the_target() {
@@ -239,7 +239,7 @@ mod tests {
             graph.add_word(dog);
             graph.add_word(fog);
             graph.target(dog);
-            assert_eq!(Target, graph.get(dog));
+            assert_eq!(Target, graph.get_word(dog));
         }
         #[test]
         fn should_mark_a_word_as_linked_to_another() {
@@ -249,7 +249,7 @@ mod tests {
             graph.add_word(dog);
             graph.add_word(fog);
             graph.link(fog, dog);
-            assert_eq!(Linked(dog), graph.get(fog))
+            assert_eq!(Linked(dog), graph.get_word(fog))
         }
         #[test]
         fn should_find_a_one_step_path_to_a_target_word() {
@@ -280,8 +280,8 @@ mod tests {
             graph.link(dog, fog);
             graph.target(fog);
             graph.unmark_all();
-            assert_eq!(Unmarked, graph.get(dog));
-            assert_eq!(Unmarked, graph.get(fog));
+            assert_eq!(Unmarked, graph.get_word(dog));
+            assert_eq!(Unmarked, graph.get_word(fog));
         }
         #[test]
         fn should_search_the_graph_starting_from_a_target_until_origin_is_found() {
@@ -297,10 +297,10 @@ mod tests {
             graph.add_word(cot);
             graph.add_word(cat);
             graph.search(cat, dog);
-            assert_eq!(Target, graph.get(cat));
-            assert_eq!(Linked(cat), graph.get(cot));
-            assert_eq!(Linked(cot), graph.get(cog));
-            assert_eq!(Linked(cog), graph.get(dog));
+            assert_eq!(Target, graph.get_word(cat));
+            assert_eq!(Linked(cat), graph.get_word(cot));
+            assert_eq!(Linked(cot), graph.get_word(cog));
+            assert_eq!(Linked(cog), graph.get_word(dog));
         }
         #[test]
         fn should_find_the_ladder_between_two_words() {
