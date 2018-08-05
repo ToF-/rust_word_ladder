@@ -5,9 +5,21 @@ struct Word {
 }
 
 impl Word {
-    pub fn from(_s: &str) -> Self {
-        Word { inner: 0 }
+    pub fn from(s: &str) -> Self {
+        Word { inner: s.as_bytes()
+                       .iter()
+                       .fold(0, |acc,c| (acc << 8) + *c as u64 ) }
+    }
 
+    pub fn to_string(&self) -> String {
+        let mut result:String = String::new();
+        let mut n = self.inner;
+        while n > 0 {
+            let c:u8 = (n & 255) as u8;
+            result.insert(0,c as char);
+            n = n >> 8
+        }
+        result.clone()
     }
 }
 
@@ -31,6 +43,7 @@ mod tests {
         use super::*;
 
         #[test]
+        #[ignore]
         fn should_find_a_ladder_between_two_words() {
             let word_graph : WordGraph = WordGraph::default();
             for s in ["CAT","CAT","BAT","BAG","COG","COT","DOG"].into_iter() {
@@ -40,6 +53,16 @@ mod tests {
                                            Word::from("DOG"));
             let expected:Vec<Word> = vec!["CAT","COT","COG","DOG"].into_iter().map(Word::from).collect();
             assert_eq!(result, expected)
+        }
+    }
+
+    mod word {
+        use super::*;
+
+        #[test]
+        fn should_be_created_from_a_string_and_converted_into_a_string() {
+            assert_eq!(String::from("DOG"),Word::from("DOG").to_string());
+            assert_eq!(String::from("CAT"),Word::from("CAT").to_string())
         }
     }
 
