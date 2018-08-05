@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::iter::FromIterator;
 
 #[derive(Debug,PartialEq,Eq,Hash,Clone,Copy)]
 struct Word {
@@ -127,7 +128,17 @@ impl WordGraph {
         self.path(origin)
     }
 }
+impl FromIterator<Word> for WordGraph {
+    fn from_iter<W: IntoIterator<Item=Word>>(iter: W) -> Self {
+        let mut graph = WordGraph::default();
 
+        for word in iter {
+            graph.add_word(word)
+        }
+
+        graph
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -136,14 +147,10 @@ mod tests {
         use super::*;
 
         #[test]
-        #[ignore]
         fn should_find_a_ladder_between_two_words() {
-            let mut graph : WordGraph = WordGraph::default();
-            for s in ["cat","cat","bat","bag","cog","cot","dog"].into_iter() {
-                graph.add_word(Word::from(s));
-            }
-            let result = graph.ladder(Word::from("cat"),
-                                      Word::from("dog"));
+            let words = ["cat","cat","bat","bag","cog","cot","dog"].into_iter().map(|s| Word::from(s));
+            let mut graph:WordGraph = words.collect();
+            let result = graph.ladder(Word::from("cat"), Word::from("dog"));
             let expected:Vec<Word> = vec!["cat","cot","cog","dog"].into_iter().map(Word::from).collect();
             assert_eq!(result, expected)
         }
@@ -215,14 +222,12 @@ mod tests {
         use WordStatus::*;
 
         #[test]
-        #[ignore]
         fn should_not_contain_a_word_when_empty() {
             let graph = WordGraph::default();
             let dog = Word::from("dog");
             assert_eq!(Unknown, graph.get_word(dog))
         }
         #[test]
-        #[ignore]
         fn should_contain_an_unmarked_word_that_was_added() {
             let dog = Word::from("dog");
             let cat = Word::from("cat");
@@ -301,22 +306,6 @@ mod tests {
             assert_eq!(NextTo(cat), graph.get_word(cot));
             assert_eq!(NextTo(cot), graph.get_word(cog));
             assert_eq!(NextTo(cog), graph.get_word(dog));
-        }
-        #[test]
-        fn should_find_the_ladder_between_two_words() {
-            let dog = Word::from("dog");
-            let fog = Word::from("fog");
-            let cog = Word::from("cog");
-            let cot = Word::from("cot");
-            let cat = Word::from("cat");
-            let mut graph = WordGraph::default();
-            graph.add_word(dog);
-            graph.add_word(fog);
-            graph.add_word(cog);
-            graph.add_word(cot);
-            graph.add_word(cat);
-            assert_eq!(vec![dog,cog,cot,cat],graph.ladder(dog,cat));
-
         }
     }
 
