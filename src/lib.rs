@@ -68,8 +68,9 @@ impl WordGraph {
 
     fn link(&mut self, word:Word, other:Word) {
         assert!(self.container.get(&word) == Some(&Unmarked));
-        self.container.remove(&word);
-        self.container.insert(word,Linked(other));
+        if let Some(val) = self.container.get_mut(&word) {
+            *val = Linked(other)
+        }
     }
 
     fn path(&self, word:Word) -> Vec<Word> {
@@ -78,6 +79,12 @@ impl WordGraph {
             Some(&Unmarked) => vec![word],
             Some(&Linked(next)) => [vec![word],self.path(next)].concat(),
             _ => vec![]
+        }
+    }
+
+    fn unmark_all(&mut self) {
+        for val in self.container.values_mut() {
+            *val = Unmarked
         }
     }
 }
@@ -209,6 +216,21 @@ mod tests {
             graph.add_word(fog);
             graph.link(fog,dog);
             assert_eq!(vec![fog,dog],graph.path(fog))
+        }
+        #[test]
+        fn should_unmark_all_the_words_before_a_search() {
+            let dog = Word::from("dog");
+            let fog = Word::from("fog");
+            let mut graph = WordGraph::default();
+            graph.add_word(dog);
+            graph.add_word(fog);
+            graph.link(dog,fog);
+            graph.link(fog,dog);
+            assert_eq!(Linked(dog), graph.get(fog));
+            assert_eq!(Linked(fog), graph.get(dog));
+            graph.unmark_all();
+            assert_eq!(Unmarked, graph.get(dog));
+            assert_eq!(Unmarked, graph.get(fog));
         }
     }
 
