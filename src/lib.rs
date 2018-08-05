@@ -23,7 +23,7 @@ impl Word {
     }
 
     fn is_adjacent(&self, other:Word) -> bool {
-        false
+        self.inner & 255 != other.inner & 255
     }
 }
 
@@ -84,6 +84,11 @@ mod tests {
             fn should_be_false_if_words_are_identical() {
                 let w = Word::from("DOG");
                 assert_eq!(false, w.is_adjacent(Word::from("DOG")))
+            }
+            #[test]
+            fn should_be_true_if_words_are_different_by_their_last_letter() {
+                let w = Word::from("DOG");
+                assert_eq!(true, w.is_adjacent(Word::from("DOT")))
             }
         }
     }
