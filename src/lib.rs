@@ -38,6 +38,9 @@ impl Word {
     }
 }
 
+#[derive(Debug,PartialEq)]
+enum WordStatus { Unknown }
+
 #[derive(Default)]
 struct WordGraph {}
 
@@ -47,6 +50,10 @@ impl WordGraph {
 
     pub fn ladder(&self, _origin: Word, _target: Word) -> Vec<Word> {
         vec![]
+    }
+
+    fn get(&self, word : Word) -> WordStatus {
+       WordStatus::Unknown
     }
 }
 
@@ -115,6 +122,17 @@ mod tests {
                 assert_eq!(false, Word::from("DOGE").is_adjacent(Word::from("DOG")));
                 assert_eq!(false, Word::from("BAT").is_adjacent(Word::from("BATH")));
             }
+        }
+    }
+
+    mod word_graph {
+        use super::*;
+        use WordStatus::*;
+
+        #[test]
+        fn should_not_contain_a_word_when_empty() {
+            let word_graph = WordGraph::default();
+            assert_eq!(Unknown, word_graph.get(Word::from("DOG")))
         }
     }
 
