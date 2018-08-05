@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug,PartialEq,Eq,Hash)]
+#[derive(Debug,PartialEq,Eq,Hash,Clone,Copy)]
 struct Word {
     inner: u64
 }
@@ -40,7 +40,7 @@ impl Word {
 }
 
 #[derive(Debug,PartialEq)]
-enum WordStatus { Unknown, Unmarked }
+enum WordStatus { Unknown, Unmarked, Linked(Word) }
 
 #[derive(Default)]
 struct WordGraph {
@@ -59,9 +59,17 @@ impl WordGraph {
 
     fn get(&self, word : Word) -> WordStatus {
         match self.container.get(&word) {
-            Some(w) => Unmarked,
-            None => Unknown
+            Some(&Unmarked) => Unmarked,
+            Some(&Linked(w)) => Linked(w),
+            _ => Unknown
+
         }
+    }
+
+    fn link(&mut self, word:Word, other:Word) {
+        assert!(self.container.get(&word) == Some(&Unmarked));
+        self.container.remove(&word);
+        self.container.insert(word,Linked(other));
     }
 }
 
@@ -148,6 +156,14 @@ mod tests {
             word_graph.add_word(Word::from("DOG"));
             assert_eq!(Unmarked, word_graph.get(Word::from("DOG")));
             assert_eq!(Unknown, word_graph.get(Word::from("CAT")))
+        }
+        #[test]
+        fn should_mark_a_word_as_linked_to_another() {
+            let mut word_graph: WordGraph = WordGraph::default();
+            word_graph.add_word(Word::from("DOG"));
+            word_graph.add_word(Word::from("FOG"));
+            word_graph.link(Word::from("FOG"),Word::from("DOG"));
+            assert_eq!(Linked (Word::from("DOG")), word_graph.get(Word::from("FOG")))
         }
     }
 
