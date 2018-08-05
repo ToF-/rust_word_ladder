@@ -41,7 +41,7 @@ impl Word {
 }
 
 #[derive(Debug,PartialEq,Eq)]
-enum WordStatus { Unknown, Unmarked, Target, Linked(Word) }
+enum WordStatus { Unknown, Unmarked, Target, NextTo(Word) }
 
 #[derive(Default,Debug)]
 struct WordGraph {
@@ -57,7 +57,7 @@ impl WordGraph {
     fn get_word(&self, word : Word) -> WordStatus {
         match self.container.get(&word) {
             Some(&Unmarked) => Unmarked,
-            Some(&Linked(w)) => Linked(w),
+            Some(&NextTo(w)) => NextTo(w),
             Some(&Target) => Target,
             _ => Unknown
 
@@ -74,7 +74,7 @@ impl WordGraph {
     fn link(&mut self, word:Word, other:Word) {
         assert!(self.container.get(&word) == Some(&Unmarked));
         if let Some(val) = self.container.get_mut(&word) {
-            *val = Linked(other)
+            *val = NextTo(other)
         }
     }
 
@@ -82,7 +82,7 @@ impl WordGraph {
         assert!(self.container.get(&word) != None);
         match self.container.get(&word) {
             Some(&Target) => vec![word],
-            Some(&Linked(next)) => [vec![word],self.path(next)].concat(),
+            Some(&NextTo(next)) => [vec![word],self.path(next)].concat(),
             _ => vec![]
         }
     }
@@ -249,7 +249,7 @@ mod tests {
             graph.add_word(dog);
             graph.add_word(fog);
             graph.link(fog, dog);
-            assert_eq!(Linked(dog), graph.get_word(fog))
+            assert_eq!(NextTo(dog), graph.get_word(fog))
         }
         #[test]
         fn should_find_a_one_step_path_to_a_target_word() {
@@ -298,9 +298,9 @@ mod tests {
             graph.add_word(cat);
             graph.search(cat, dog);
             assert_eq!(Target, graph.get_word(cat));
-            assert_eq!(Linked(cat), graph.get_word(cot));
-            assert_eq!(Linked(cot), graph.get_word(cog));
-            assert_eq!(Linked(cog), graph.get_word(dog));
+            assert_eq!(NextTo(cat), graph.get_word(cot));
+            assert_eq!(NextTo(cot), graph.get_word(cog));
+            assert_eq!(NextTo(cog), graph.get_word(dog));
         }
         #[test]
         fn should_find_the_ladder_between_two_words() {
