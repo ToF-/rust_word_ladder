@@ -1,0 +1,6 @@
+[package]
+name = "rust_word_ladder"
+version = "0.1.0"
+authors = ["ToF <cthibaut@octo.com>"]
+
+[dependencies]
