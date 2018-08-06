@@ -122,6 +122,10 @@ impl WordGraph {
         self.link(origin,target)
     }
     pub fn ladder(&mut self, origin : Word, target: Word ) -> Vec<Word> {
+        if self.get_word(origin) == Unknown
+            || self.get_word(target) == Unknown {
+            return vec![]
+        }
         self.unmark_all();
         self.target(target);
         self.search(target, origin);
@@ -152,6 +156,29 @@ mod tests {
             let mut graph:WordGraph = words.collect();
             let result = graph.ladder(Word::from("cat"), Word::from("dog"));
             let expected:Vec<Word> = vec!["cat","cot","cog","dog"].into_iter().map(Word::from).collect();
+            assert_eq!(result, expected)
+        }
+        #[test]
+        fn should_return_an_empty_list_if_origin_word_is_not_present() {
+            let words = ["cat","cat","bat","bag","cog","cot","dog"].into_iter().map(|s| Word::from(s));
+            let mut graph:WordGraph = words.collect();
+            let result = graph.ladder(Word::from("foo"), Word::from("dog"));
+            assert_eq!(result, vec![])
+        }
+        #[test]
+        fn should_return_an_empty_list_if_target_word_is_not_present() {
+            let words = ["cat", "cat", "bat", "bag", "cog", "cot", "dog"].into_iter().map(|s| Word::from(s));
+            let mut graph: WordGraph = words.collect();
+            let result = graph.ladder(Word::from("cat"), Word::from("qux"));
+            assert_eq!(result, vec![])
+        }
+        #[test]
+        fn should_return_an_empty_list_if_no_path_can_be_found() {
+            let words = ["cat", "cat", "bat", "bag", "cog", "cot", "qux"].into_iter().map(|s| Word::from(s));
+            let mut graph: WordGraph = words.collect();
+            let result: Vec<String> = graph.ladder(Word::from("cat"), Word::from("qux"))
+                .into_iter().map(|w| w.to_string()).collect();
+            let expected:Vec<String> = vec![];
             assert_eq!(result, expected)
         }
     }
