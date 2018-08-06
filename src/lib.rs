@@ -295,12 +295,7 @@ mod tests {
             let cog = Word::from("cog");
             let cot = Word::from("cot");
             let cat = Word::from("cat");
-            let mut graph = WordGraph::default();
-            graph.add_word(dog);
-            graph.add_word(fog);
-            graph.add_word(cog);
-            graph.add_word(cot);
-            graph.add_word(cat);
+            let mut graph:WordGraph = vec![dog,fog,cog,cot,cat].into_iter().collect();
             graph.search(cat, dog);
             assert_eq!(Target, graph.get_word(cat));
             assert_eq!(NextTo(cat), graph.get_word(cot));
