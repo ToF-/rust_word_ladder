@@ -279,9 +279,8 @@ mod tests {
         fn should_unmark_all_the_words_before_a_search() {
             let dog = Word::from("dog");
             let fog = Word::from("fog");
-            let mut graph = WordGraph::default();
-            graph.add_word(dog);
-            graph.add_word(fog);
+            let mut graph:WordGraph = vec!["dog","fog","cog","cot","cat"]
+                .into_iter().map(Word::from).collect();
             graph.link(dog, fog);
             graph.target(fog);
             graph.unmark_all();
@@ -291,11 +290,12 @@ mod tests {
         #[test]
         fn should_search_the_graph_starting_from_a_target_until_origin_is_found() {
             let dog = Word::from("dog");
-            let fog = Word::from("fog");
             let cog = Word::from("cog");
             let cot = Word::from("cot");
+            let fog = Word::from("fog");
             let cat = Word::from("cat");
-            let mut graph:WordGraph = vec![dog,fog,cog,cot,cat].into_iter().collect();
+            let mut graph:WordGraph = vec![dog,fog,cog,cot,cat]
+                .into_iter().collect();
             graph.search(cat, dog);
             assert_eq!(Target, graph.get_word(cat));
             assert_eq!(NextTo(cat), graph.get_word(cot));
@@ -303,6 +303,4 @@ mod tests {
             assert_eq!(NextTo(cog), graph.get_word(dog));
         }
     }
-
-
 }
