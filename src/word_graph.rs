@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::iter::FromIterator;
 
 #[derive(Debug,PartialEq,Eq,Hash,Clone,Copy)]
-struct Word {
+pub struct Word {
     inner: u64
 }
 
@@ -45,11 +45,11 @@ impl Word {
 enum WordStatus { Unknown, Unmarked, Target, NextTo(Word) }
 
 #[derive(Default,Debug)]
-struct WordGraph {
+pub struct WordGraph {
     container : HashMap<Word,WordStatus>
 }
 
-use WordStatus::*;
+use self::WordStatus::*;
 impl WordGraph {
     pub fn add_word(&mut self, word : Word) {
         self.container.insert(word, Unmarked);
@@ -110,12 +110,12 @@ impl WordGraph {
         while let Some(word) = to_visit.pop_front() {
             if word == origin {
                 return
-            }
-            let key = word.clone();
-            for next in self.unvisited_adjacents(key){
-                if self.get_word(next) == Unmarked {
-                    to_visit.push_back(next);
-                    self.link(next,key)
+            } else {
+                for next in self.unvisited_adjacents(word) {
+                    if self.get_word(next) == Unmarked {
+                        to_visit.push_back(next);
+                        self.link(next, word)
+                    }
                 }
             }
         }
@@ -219,7 +219,6 @@ mod tests {
 
     mod word_graph {
         use super::*;
-        use WordStatus::*;
 
         #[test]
         fn should_not_contain_a_word_when_empty() {
