@@ -119,7 +119,6 @@ impl WordGraph {
                 }
             }
         }
-        self.link(origin,target)
     }
     pub fn ladder(&mut self, origin : Word, target: Word ) -> Vec<Word> {
         if self.get_word(origin) == Unknown
@@ -327,6 +326,22 @@ mod tests {
             assert_eq!(NextTo(cat), graph.get_word(cot));
             assert_eq!(NextTo(cot), graph.get_word(cog));
             assert_eq!(NextTo(cog), graph.get_word(dog));
+        }
+        #[test]
+        fn should_not_mark_nodes_to_a_path_when_there_is_not_a_path() {
+            let dog = Word::from("dog");
+            let cog = Word::from("cog");
+            let cot = Word::from("cot");
+            let fog = Word::from("fog");
+            let cat = Word::from("cat");
+            let qux = Word::from("qux");
+            let mut graph:WordGraph = vec![dog,fog,cog,cot,cat,qux]
+                .into_iter().collect();
+            graph.search(qux, dog);
+            assert_eq!(Target, graph.get_word(qux));
+            assert_eq!(Unmarked, graph.get_word(cat));
+            // assert_eq!(Unmarked, graph.get_word(cog));
+            // assert_eq!(Unmarked, graph.get_word(dog));
         }
     }
 }
